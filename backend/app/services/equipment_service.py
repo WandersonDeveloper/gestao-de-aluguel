@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.config import storage
 from app.domain.equipment_state import assert_valid_transition
 from app.domain.exceptions import ConflictError, NotFoundError
 from app.models.equipment import Equipment, EquipmentStatus
@@ -68,7 +69,11 @@ def delete_equipment(db: Session, equipment_id: int) -> None:
         raise ConflictError("Não é possível excluir um equipamento vinculado a algum contrato")
     if service_order_repository.exists_for_equipamento(db, equipment_id):
         raise ConflictError("Não é possível excluir um equipamento com ordens de serviço registradas")
+
+    fotos = list(equipment.fotos)
     equipment_repository.delete(db, equipment)
+    for key in fotos:
+        storage.delete_file(key)
 
 
 def change_status(
@@ -95,3 +100,23 @@ def change_status(
 def list_movements(db: Session, equipment_id: int, skip: int = 0, limit: int = 50):
     get_equipment(db, equipment_id)
     return inventory_movement_repository.list_by_equipamento(db, equipment_id, skip=skip, limit=limit)
+
+
+def add_photo(db: Session, equipment_id: int, file_bytes: bytes, filename: str, content_type: str | None) -> str:
+    equipment = get_equipment(db, equipment_id)
+    key = storage.upload_file(file_bytes, filename, content_type)
+    equipment_repository.update(db, equipment, {"fotos": [*equipment.fotos, key]})
+    return key
+
+
+def list_photo_keys(db: Session, equipment_id: int) -> list[str]:
+    equipment = get_equipment(db, equipment_id)
+    return list(equipment.fotos)
+
+
+def remove_photo(db: Session, equipment_id: int, key: str) -> None:
+    equipment = get_equipment(db, equipment_id)
+    if key not in equipment.fotos:
+        raise NotFoundError(f"Foto {key} não encontrada para este equipamento")
+    equipment_repository.update(db, equipment, {"fotos": [k for k in equipment.fotos if k != key]})
+    storage.delete_file(key)

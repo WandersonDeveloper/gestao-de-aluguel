@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.config.database import get_db
 from app.controllers import equipment_controller
 from app.models.equipment import EquipmentStatus
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.equipment import EquipmentCreate, EquipmentRead, EquipmentUpdate
+from app.schemas.equipment_photo import EquipmentPhotoRead
 from app.schemas.inventory_movement import EquipmentStatusChange, InventoryMovementRead
-from app.utils.deps import get_current_user
+from app.utils.deps import get_current_user, require_roles
 
 router = APIRouter(prefix="/equipment", tags=["equipment"], dependencies=[Depends(get_current_user)])
 
@@ -42,7 +43,11 @@ def update_equipment(
 
 
 @router.delete("/{equipment_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_equipment(equipment_id: int, db: Session = Depends(get_db)) -> None:
+def delete_equipment(
+    equipment_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
+) -> None:
     equipment_controller.delete_equipment(db, equipment_id)
 
 
@@ -51,7 +56,7 @@ def change_equipment_status(
     equipment_id: int,
     data: EquipmentStatusChange,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
 ) -> EquipmentRead:
     return equipment_controller.change_status(db, equipment_id, data, current_user.id)
 
@@ -61,3 +66,29 @@ def list_equipment_movements(
     equipment_id: int, skip: int = 0, limit: int = 50, db: Session = Depends(get_db)
 ) -> list[InventoryMovementRead]:
     return equipment_controller.list_movements(db, equipment_id, skip, limit)
+
+
+@router.post("/{equipment_id}/photos", response_model=EquipmentPhotoRead, status_code=status.HTTP_201_CREATED)
+async def add_equipment_photo(
+    equipment_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
+) -> EquipmentPhotoRead:
+    file_bytes = await file.read()
+    return equipment_controller.add_photo(db, equipment_id, file_bytes, file.filename, file.content_type)
+
+
+@router.get("/{equipment_id}/photos", response_model=list[EquipmentPhotoRead])
+def list_equipment_photos(equipment_id: int, db: Session = Depends(get_db)) -> list[EquipmentPhotoRead]:
+    return equipment_controller.list_photos(db, equipment_id)
+
+
+@router.delete("/{equipment_id}/photos/{photo_key}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_equipment_photo(
+    equipment_id: int,
+    photo_key: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
+) -> None:
+    equipment_controller.remove_photo(db, equipment_id, photo_key)

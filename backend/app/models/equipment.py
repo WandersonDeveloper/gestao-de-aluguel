@@ -38,6 +38,7 @@ class Equipment(Base):
     localizacao: Mapped[str | None] = mapped_column(String(255))
     observacoes: Mapped[str | None] = mapped_column(String(2000))
     atributos_extra: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
+    fotos: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     categoria: Mapped[EquipmentCategory] = relationship()

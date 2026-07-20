@@ -77,6 +77,11 @@ def operador_user(db_session) -> User:
 
 
 @pytest.fixture()
+def financeiro_user(db_session) -> User:
+    return _create_user(db_session, "financeiro.teste@example.com", UserRole.FINANCEIRO)
+
+
+@pytest.fixture()
 def authed_client(client, admin_user):
     client.headers.update(_auth_headers(admin_user))
     return client
@@ -85,4 +90,10 @@ def authed_client(client, admin_user):
 @pytest.fixture()
 def operador_client(client, operador_user):
     client.headers.update(_auth_headers(operador_user))
+    return client
+
+
+@pytest.fixture()
+def financeiro_client(client, financeiro_user):
+    client.headers.update(_auth_headers(financeiro_user))
     return client

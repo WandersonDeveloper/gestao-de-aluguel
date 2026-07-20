@@ -4,15 +4,19 @@ from sqlalchemy.orm import Session
 from app.config.database import get_db
 from app.controllers import service_order_controller
 from app.models.service_order import ServiceOrderStatus
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.service_order import ServiceOrderCloseRequest, ServiceOrderCreate, ServiceOrderRead
-from app.utils.deps import get_current_user
+from app.utils.deps import get_current_user, require_roles
 
 router = APIRouter(prefix="/service-orders", tags=["service-orders"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("", response_model=ServiceOrderRead, status_code=status.HTTP_201_CREATED)
-def create_service_order(data: ServiceOrderCreate, db: Session = Depends(get_db)) -> ServiceOrderRead:
+def create_service_order(
+    data: ServiceOrderCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
+) -> ServiceOrderRead:
     return service_order_controller.create_service_order(db, data)
 
 
@@ -34,7 +38,11 @@ def get_service_order(service_order_id: int, db: Session = Depends(get_db)) -> S
 
 
 @router.post("/{service_order_id}/start", response_model=ServiceOrderRead)
-def start_service_order(service_order_id: int, db: Session = Depends(get_db)) -> ServiceOrderRead:
+def start_service_order(
+    service_order_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
+) -> ServiceOrderRead:
     return service_order_controller.start_service_order(db, service_order_id)
 
 
@@ -43,7 +51,7 @@ def complete_service_order(
     service_order_id: int,
     data: ServiceOrderCloseRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
 ) -> ServiceOrderRead:
     return service_order_controller.complete_service_order(db, service_order_id, data.observacoes, current_user.id)
 
@@ -53,6 +61,6 @@ def cancel_service_order(
     service_order_id: int,
     data: ServiceOrderCloseRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
 ) -> ServiceOrderRead:
     return service_order_controller.cancel_service_order(db, service_order_id, data.observacoes, current_user.id)

@@ -1,7 +1,10 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.config.settings import settings
+from app.config.storage import ensure_bucket_exists
 from app.domain.exceptions import (
     ConflictError,
     ForbiddenError,
@@ -11,7 +14,17 @@ from app.domain.exceptions import (
 )
 from app.routes.api import api_router
 
-app = FastAPI(title=settings.app_name)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        ensure_bucket_exists()
+    except Exception as exc:  # object storage é opcional para a API subir
+        print(f"Aviso: não foi possível conectar ao object storage no startup: {exc}")
+    yield
+
+
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
 app.include_router(api_router)
 
 

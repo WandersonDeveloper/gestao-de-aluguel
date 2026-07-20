@@ -8,6 +8,7 @@ from app.models.equipment import Equipment
 from app.models.equipment_category import EquipmentCategory
 from app.models.inventory_movement import InventoryMovement
 from app.models.service_order import ServiceOrder
+from app.models.supplier import Supplier
 from app.models.user import User
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "EquipmentCategory",
     "InventoryMovement",
     "ServiceOrder",
+    "Supplier",
     "User",
 ]

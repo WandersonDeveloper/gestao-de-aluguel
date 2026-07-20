@@ -1,12 +1,17 @@
 # Gestão de Aluguéis de Equipamentos
 
-Sistema de gestão de aluguel de equipamentos (cadastros, disponibilidade, contratos, ordens de serviço e financeiro). Veja o plano completo em [docs/plano-sistema-alugueis.md](docs/plano-sistema-alugueis.md).
+Sistema de gestão de aluguel de equipamentos (cadastros, disponibilidade, contratos, ordens de serviço e financeiro).
+
+- Plano completo: [docs/plano-sistema-alugueis.md](docs/plano-sistema-alugueis.md)
+- Referência da API: [docs/api.md](docs/api.md) (ou `/docs` com o backend rodando)
+- Regras de negócio e decisões de implementação: [docs/regras-de-negocio.md](docs/regras-de-negocio.md)
 
 ## Stack
 
 - **Backend:** Python + FastAPI + SQLAlchemy + Alembic
 - **Frontend:** React + TypeScript (Vite)
 - **Banco de dados:** PostgreSQL
+- **Object storage:** MinIO (compatível com S3) — fotos de equipamento
 
 ## Pré-requisitos
 
@@ -22,6 +27,7 @@ docker compose up --build
 - Backend: http://localhost:8000 (docs automáticos em `/docs`)
 - Frontend: http://localhost:5173
 - PostgreSQL: `localhost:5432` (usuário/senha/banco: `alugueis`)
+- MinIO: console em http://localhost:9001 (usuário `alugueis` / senha `alugueis123`), API S3 em `localhost:9000`
 
 Para aplicar as migrations do banco (dentro do container do backend):
 

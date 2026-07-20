@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
 
+from app.config.storage import get_file_url
 from app.models.equipment import Equipment, EquipmentStatus
 from app.models.inventory_movement import InventoryMovement
 from app.schemas.equipment import EquipmentCreate, EquipmentUpdate
+from app.schemas.equipment_photo import EquipmentPhotoRead
 from app.schemas.inventory_movement import EquipmentStatusChange
 from app.services import equipment_service
 
@@ -44,3 +46,19 @@ def change_status(
 
 def list_movements(db: Session, equipment_id: int, skip: int, limit: int) -> list[InventoryMovement]:
     return equipment_service.list_movements(db, equipment_id, skip=skip, limit=limit)
+
+
+def add_photo(
+    db: Session, equipment_id: int, file_bytes: bytes, filename: str, content_type: str | None
+) -> EquipmentPhotoRead:
+    key = equipment_service.add_photo(db, equipment_id, file_bytes, filename, content_type)
+    return EquipmentPhotoRead(key=key, url=get_file_url(key))
+
+
+def list_photos(db: Session, equipment_id: int) -> list[EquipmentPhotoRead]:
+    keys = equipment_service.list_photo_keys(db, equipment_id)
+    return [EquipmentPhotoRead(key=key, url=get_file_url(key)) for key in keys]
+
+
+def remove_photo(db: Session, equipment_id: int, key: str) -> None:
+    equipment_service.remove_photo(db, equipment_id, key)

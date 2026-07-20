@@ -7,6 +7,7 @@ from app.routes.equipment_category_routes import router as equipment_category_ro
 from app.routes.equipment_routes import router as equipment_router
 from app.routes.health_routes import router as health_router
 from app.routes.service_order_routes import router as service_order_router
+from app.routes.supplier_routes import router as supplier_router
 from app.routes.user_routes import router as user_router
 
 api_router = APIRouter(prefix="/api")
@@ -18,3 +19,4 @@ api_router.include_router(equipment_category_router)
 api_router.include_router(equipment_router)
 api_router.include_router(contract_router)
 api_router.include_router(service_order_router)
+api_router.include_router(supplier_router)
