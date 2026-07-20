@@ -7,6 +7,9 @@ from app.models.contract_item import ContractItem
 from app.models.equipment import Equipment
 from app.models.equipment_category import EquipmentCategory
 from app.models.inventory_movement import InventoryMovement
+from app.models.invoice import Invoice
+from app.models.invoice_item import InvoiceItem
+from app.models.payment import Payment
 from app.models.service_order import ServiceOrder
 from app.models.supplier import Supplier
 from app.models.user import User
@@ -19,6 +22,9 @@ __all__ = [
     "Equipment",
     "EquipmentCategory",
     "InventoryMovement",
+    "Invoice",
+    "InvoiceItem",
+    "Payment",
     "ServiceOrder",
     "Supplier",
     "User",

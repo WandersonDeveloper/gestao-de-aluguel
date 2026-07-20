@@ -37,6 +37,18 @@ aberta → em_andamento → concluída
 cancelada
 ```
 
+### Fatura (`app/domain/invoice_state.py`)
+
+```
+pendente → paga
+    ↓
+ atrasada → paga / cancelada
+```
+
+- `pendente → atrasada`: job diário (`mark_overdue_invoices`), quando `data_vencimento < hoje`. Aplica uma multa de `late_fee_percentage` (padrão 2%, `app/config/settings.py`) sobre o valor da fatura, **uma única vez** — não há cálculo de juros compostos por dia de atraso.
+- `pendente/atrasada → paga`: quando a soma dos pagamentos registrados atinge o valor da fatura. Pagamento parcial não muda o status (o modelo não tem um estado "parcialmente paga", conforme seção 4.4 do plano).
+- `pendente/atrasada → cancelada`: manual, ou automático quando o contrato é cancelado (ver abaixo).
+
 ## Reserva de equipamento e conflito de datas
 
 Um equipamento não pode ter dois itens de contrato **ativos** (não devolvidos) com períodos sobrepostos. Isso é garantido por uma `EXCLUDE CONSTRAINT` no PostgreSQL (`contract_items_no_overlap`, usando `daterange` + `gist`), não apenas por validação de aplicação — é a garantia central que motivou a escolha de Postgres em vez de MongoDB (ver seção 2 do plano).
@@ -49,6 +61,13 @@ O plano (seção 5.4) marcava como "regra a decidir" o que acontece quando uma O
 - **Concluir ou cancelar uma OS libera o equipamento de volta para `disponível` automaticamente, se ele estava em `manutenção`.** Isso é um requisito explícito do plano (não ambíguo) e foi implementado em `service_order_service._release_equipment_if_in_maintenance`.
 
 O plano (seção 5.3) também marcava como "regra a definir" se a baixa de contrato deveria validar a existência de OS aberta vinculada. **Não implementado** — dar baixa em um contrato não verifica OS abertas. Fica como ponto pendente caso o negócio precise dessa trava no futuro.
+
+## Faturamento (Fase 5)
+
+- Fatura só é gerada automaticamente **se o contrato tiver `valor_total` definido na criação**. Sem `valor_total`, a ativação não gera nenhuma fatura (não há como dividir um valor desconhecido).
+- A divisão entre faturas segue `periodicidade_cobranca` do contrato (`unica`, `mensal`, `diaria`), dividindo `valor_total` em partes iguais (o resto de arredondamento fica na última fatura, para a soma bater exatamente com o total). O mesmo critério de divisão é aplicado entre os itens do contrato dentro de cada fatura (`invoice_items`).
+- **Baixa de contrato não cancela faturas** — o cliente usou o equipamento, a cobrança segue normalmente. **Cancelamento de contrato cancela** as faturas ainda `pendente`/`atrasada` (faturas já `paga` não são afetadas) — isso segue exatamente a distinção que o plano já fazia na seção 4.2 entre baixa (gera cobrança) e cancelamento (normalmente não gera cobrança).
+- Registrar pagamento e cancelar fatura exigem papel `admin` ou `financeiro` — **não** `operador`, que cuida da parte operacional (contratos/equipamentos/OS), não da parte financeira.
 
 ## Simplificações assumidas (não estavam no plano original)
 
@@ -67,9 +86,10 @@ Regra geral: **ações operacionais** (que mudam o estado de um contrato, equipa
 | Mudar status de equipamento, upload/remoção de foto | `admin`, `operador` |
 | Criar/ativar/dar baixa/estender/cancelar contrato | `admin`, `operador` |
 | Criar/iniciar/concluir/cancelar OS | `admin`, `operador` |
-| Leitura de contratos, OS, movimentações, aditivos | qualquer papel autenticado |
+| Registrar pagamento, cancelar fatura | `admin`, `financeiro` |
+| Leitura de contratos, OS, faturas, movimentações, aditivos, relatórios | qualquer papel autenticado |
 
-Este é o nível de granularidade implementado hoje. O plano (seção 11) também previa "aplicar desconto" e "dar baixa em pagamento" como ações restritas — essas não existem ainda porque o módulo financeiro (Fase 5) não foi implementado; quando existir, deve seguir o mesmo padrão (`require_roles` em `app/utils/deps.py`).
+Isso implementa por completo a divisão de papéis prevista na seção 11 do plano: `operador` cuida do fluxo operacional (contrato/equipamento/OS), `financeiro` cuida da cobrança, `admin` pode tudo. O plano mencionava "aplicar desconto" como ação restrita — não existe um desconto explícito hoje; o mais próximo é o `valor_total` livre definido na criação do contrato (que já exige `admin`/`operador`, os únicos que criam contrato).
 
 ## Exclusões e integridade referencial
 

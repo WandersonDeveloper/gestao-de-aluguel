@@ -51,10 +51,12 @@ Todos exigem apenas usuário autenticado (qualquer papel), exceto onde indicado.
 | `/contracts/{id}/amendments` | GET | qualquer papel |
 
 Detalhes de corpo de requisição:
-- `POST /contracts`: `{cliente_id, data_inicio, data_fim, equipamento_ids: [...], valor_total?, observacoes?}`
+- `POST /contracts`: `{cliente_id, data_inicio, data_fim, equipamento_ids: [...], periodicidade_cobranca?: "unica"|"mensal"|"diaria", valor_total?, observacoes?}`
 - `POST /contracts/{id}/baixa`: `{item_ids: [...] | null, motivo?}` — `null` = baixa total
 - `POST /contracts/{id}/extend`: `{nova_data_fim, motivo?}`
 - `POST /contracts/{id}/cancel`: `{motivo?}`
+
+Se `valor_total` for informado na criação, a ativação do contrato (`POST /contracts/{id}/activate`) gera automaticamente as faturas em `invoices`, divididas conforme `periodicidade_cobranca` (ver Módulo 5). Sem `valor_total`, nenhuma fatura é gerada.
 
 ## Ordens de serviço (Módulo 4)
 
@@ -69,7 +71,34 @@ Detalhes de corpo de requisição:
 
 `complete`/`cancel` recebem `{observacoes?}` e liberam automaticamente o equipamento (volta a `disponivel`) se ele estava em `manutencao`.
 
+## Financeiro (Módulo 5)
+
+| Rota | Método | Papel exigido |
+|---|---|---|
+| `/invoices` | GET | qualquer papel (filtros `?contrato_id=`, `?status=`) |
+| `/invoices/{id}` | GET | qualquer papel |
+| `/invoices/{id}/items` | GET | qualquer papel |
+| `/invoices/{id}/cancel` | POST | admin/financeiro |
+| `/invoices/{id}/payments` | POST | admin/financeiro |
+| `/invoices/{id}/payments` | GET | qualquer papel |
+
+- `POST /invoices/{id}/payments`: `{valor, forma_pagamento?, observacoes?}` — aceita pagamento parcial; a fatura só vira `paga` quando a soma dos pagamentos atinge o valor total.
+- Faturas são geradas automaticamente na ativação do contrato (ver seção de Contratos acima) — não há endpoint para criar fatura manualmente.
+- Cancelar um contrato (`POST /contracts/{id}/cancel`) cancela automaticamente as faturas ainda `pendente`/`atrasada` desse contrato. Dar baixa (`/baixa`) **não** cancela faturas — a cobrança continua normalmente.
+
+### Relatórios
+
+| Rota | Descrição |
+|---|---|
+| `GET /reports/rentals?data_inicio=&data_fim=` | Contagem de contratos por status + valor total contratado no período |
+| `GET /reports/most-rented-equipment?limit=` | Equipamentos mais alugados (por número de itens de contrato) |
+| `GET /reports/overdue-invoices` | Faturas `atrasada` agrupadas por cliente |
+| `GET /reports/dashboard` | KPIs gerais: equipamentos por status, contratos ativos/vencidos, OS abertas, inadimplência, receita do mês |
+
+Todas as rotas de relatório exigem apenas usuário autenticado (qualquer papel).
+
 ## Scripts administrativos (fora da API HTTP)
 
 - `python -m app.scripts.seed_admin` — cria o usuário admin inicial
 - `python -m app.scripts.mark_expired_contracts` — job diário que marca contratos vencidos (ver README para agendamento via cron)
+- `python -m app.scripts.mark_overdue_invoices` — job diário que marca faturas pendentes vencidas como `atrasada` e aplica a multa configurada (`late_fee_percentage`, padrão 2%)

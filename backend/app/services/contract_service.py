@@ -19,7 +19,7 @@ from app.repositories import (
 )
 from app.schemas.contract import ContractCreate
 from app.schemas.inventory_movement import EquipmentStatusChange
-from app.services import equipment_service
+from app.services import equipment_service, invoice_service
 
 
 def _get_contract(db: Session, contract_id: int) -> Contract:
@@ -45,6 +45,7 @@ def create_contract(db: Session, data: ContractCreate) -> Contract:
                 "cliente_id": data.cliente_id,
                 "data_inicio": data.data_inicio,
                 "data_fim": data.data_fim,
+                "periodicidade_cobranca": data.periodicidade_cobranca,
                 "valor_total": data.valor_total,
                 "observacoes": data.observacoes,
             },
@@ -119,6 +120,7 @@ def activate_contract(db: Session, contract_id: int, usuario_id: int) -> Contrac
             )
 
     contract = contract_repository.update(db, contract, {"status": ContractStatus.ATIVO})
+    invoice_service.generate_invoices_for_contract(db, contract)
     db.commit()
     db.refresh(contract)
     return contract
@@ -249,6 +251,7 @@ def cancel_contract(db: Session, contract_id: int, motivo: str | None, usuario_i
             "motivo": motivo,
         },
     )
+    invoice_service.cancel_invoices_for_contract(db, contract.id)
     db.commit()
     db.refresh(contract)
     return contract

@@ -45,13 +45,17 @@ ADMIN_EMAIL=admin@exemplo.com ADMIN_PASSWORD=senha-forte python -m app.scripts.s
 
 # Job diário: marca como "vencido" todo contrato ativo cuja data_fim já passou
 python -m app.scripts.mark_expired_contracts
+
+# Job diário: marca fatura pendente vencida como "atrasada" e aplica a multa configurada
+python -m app.scripts.mark_overdue_invoices
 ```
 
-O `mark_expired_contracts` precisa rodar periodicamente (uma vez por dia é suficiente) para manter o status dos contratos em dia — ele não roda sozinho. Agende via cron (Linux/no host) ou Agendador de Tarefas do Windows, por exemplo:
+Esses dois jobs diários não rodam sozinhos — agende via cron (Linux/no host) ou Agendador de Tarefas do Windows, por exemplo:
 
 ```bash
 # crontab -e — todo dia às 00:05
 5 0 * * * docker compose -f /caminho/docker-compose.yml exec -T backend python -m app.scripts.mark_expired_contracts
+6 0 * * * docker compose -f /caminho/docker-compose.yml exec -T backend python -m app.scripts.mark_overdue_invoices
 ```
 
 ## Rodando sem Docker

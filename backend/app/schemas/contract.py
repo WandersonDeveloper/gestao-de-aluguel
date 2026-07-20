@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.contract import ContractStatus
+from app.models.contract import BillingPeriodicity, ContractStatus
 from app.models.contract_item import ContractItemStatus
 
 
@@ -24,6 +24,7 @@ class ContractCreate(BaseModel):
     data_inicio: date
     data_fim: date
     equipamento_ids: list[int]
+    periodicidade_cobranca: BillingPeriodicity = BillingPeriodicity.UNICA
     valor_total: Decimal | None = None
     observacoes: str | None = None
 
@@ -36,6 +37,7 @@ class ContractRead(BaseModel):
     data_inicio: date
     data_fim: date
     status: ContractStatus
+    periodicidade_cobranca: BillingPeriodicity
     valor_total: Decimal | None
     observacoes: str | None
     created_at: datetime

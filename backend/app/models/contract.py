@@ -17,6 +17,12 @@ class ContractStatus(str, enum.Enum):
     CANCELADO = "cancelado"
 
 
+class BillingPeriodicity(str, enum.Enum):
+    UNICA = "unica"
+    MENSAL = "mensal"
+    DIARIA = "diaria"
+
+
 class Contract(Base):
     __tablename__ = "contracts"
 
@@ -28,6 +34,12 @@ class Contract(Base):
         SAEnum(ContractStatus, name="contract_status"),
         default=ContractStatus.RASCUNHO,
         server_default=ContractStatus.RASCUNHO.name,
+        nullable=False,
+    )
+    periodicidade_cobranca: Mapped[BillingPeriodicity] = mapped_column(
+        SAEnum(BillingPeriodicity, name="billing_periodicity"),
+        default=BillingPeriodicity.UNICA,
+        server_default=BillingPeriodicity.UNICA.name,
         nullable=False,
     )
     valor_total: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))

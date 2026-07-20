@@ -22,5 +22,8 @@ class Settings(BaseSettings):
     s3_secret_key: str = "alugueis123"
     s3_bucket_name: str = "equipment-photos"
 
+    # Multa aplicada uma única vez quando uma fatura pendente vence (fluxo 5.5 do plano).
+    late_fee_percentage: float = 2.0
+
 
 settings = Settings()
