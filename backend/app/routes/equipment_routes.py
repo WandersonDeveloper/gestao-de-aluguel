@@ -7,6 +7,7 @@ from app.models.equipment import EquipmentStatus
 from app.models.user import User, UserRole
 from app.schemas.equipment import EquipmentCreate, EquipmentRead, EquipmentUpdate
 from app.schemas.equipment_photo import EquipmentPhotoRead
+from app.schemas.equipment_stock import EquipmentStockRead, EquipmentStockUpsert
 from app.schemas.inventory_movement import EquipmentStatusChange, InventoryMovementRead
 from app.utils.deps import get_current_user, require_roles
 
@@ -25,9 +26,10 @@ def list_equipment(
     categoria_id: int | None = None,
     status: EquipmentStatus | None = None,
     nome: str | None = None,
+    filial_id: int | None = None,
     db: Session = Depends(get_db),
 ) -> list[EquipmentRead]:
-    return equipment_controller.list_equipment(db, skip, limit, categoria_id, status, nome)
+    return equipment_controller.list_equipment(db, skip, limit, categoria_id, status, nome, filial_id)
 
 
 @router.get("/{equipment_id}", response_model=EquipmentRead)
@@ -51,6 +53,32 @@ def delete_equipment(
     equipment_controller.delete_equipment(db, equipment_id)
 
 
+@router.get("/{equipment_id}/estoque", response_model=list[EquipmentStockRead])
+def list_equipment_estoque(equipment_id: int, db: Session = Depends(get_db)) -> list[EquipmentStockRead]:
+    return equipment_controller.list_estoque(db, equipment_id)
+
+
+@router.put("/{equipment_id}/estoque/{filial_id}", response_model=EquipmentStockRead)
+def set_equipment_estoque(
+    equipment_id: int,
+    filial_id: int,
+    data: EquipmentStockUpsert,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
+) -> EquipmentStockRead:
+    return equipment_controller.set_estoque(db, equipment_id, filial_id, data)
+
+
+@router.delete("/{equipment_id}/estoque/{filial_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_equipment_estoque(
+    equipment_id: int,
+    filial_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.ADMIN, UserRole.OPERADOR)),
+) -> None:
+    equipment_controller.remove_estoque(db, equipment_id, filial_id)
+
+
 @router.post("/{equipment_id}/status", response_model=EquipmentRead)
 def change_equipment_status(
     equipment_id: int,
@@ -63,9 +91,13 @@ def change_equipment_status(
 
 @router.get("/{equipment_id}/movements", response_model=list[InventoryMovementRead])
 def list_equipment_movements(
-    equipment_id: int, skip: int = 0, limit: int = 50, db: Session = Depends(get_db)
+    equipment_id: int,
+    skip: int = 0,
+    limit: int = 50,
+    dias: int | None = 30,
+    db: Session = Depends(get_db),
 ) -> list[InventoryMovementRead]:
-    return equipment_controller.list_movements(db, equipment_id, skip, limit)
+    return equipment_controller.list_movements(db, equipment_id, skip, limit, dias)
 
 
 @router.post("/{equipment_id}/photos", response_model=EquipmentPhotoRead, status_code=status.HTTP_201_CREATED)

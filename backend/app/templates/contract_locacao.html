@@ -1,0 +1,74 @@
+{% extends "contract_base.html" %}
+{% block conteudo %}
+
+    <h2>Do objeto</h2>
+    <p>
+        O presente contrato tem por objeto a locação, pel{{ "a" }} LOCADORA à LOCATÁRIA, dos equipamentos
+        discriminados na tabela abaixo, nas quantidades e condições ali especificadas, para uso da LOCATÁRIA
+        durante o prazo de vigência deste instrumento.
+    </p>
+    <table class="itens">
+        <tr>
+            <th>Equipamento</th>
+            <th>Filial de origem</th>
+            <th>Quantidade</th>
+            <th>Valor de referência</th>
+        </tr>
+        {% for item in itens %}
+        <tr>
+            <td>{{ item.equipamento_nome }}{% if item.identificador %} ({{ item.identificador }}){% endif %}</td>
+            <td>{{ item.filial_nome }}</td>
+            <td>{{ item.quantidade }}</td>
+            <td>{{ item.valor_referencia }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Do prazo</h2>
+    <p>
+        A locação vigorará de <strong>{{ contrato.data_inicio }}</strong> a <strong>{{ contrato.data_fim }}</strong>,
+        podendo ser prorrogada mediante aditivo formalizado entre as partes.
+    </p>
+
+    <h2>Do valor e forma de pagamento</h2>
+    <p>
+        {% if contrato.valor_total %}
+        O valor total da locação é de <strong>{{ contrato.valor_total }}</strong>, com cobrança na periodicidade
+        <strong>{{ periodicidade_label }}</strong>, conforme faturas emitidas pela LOCADORA.
+        {% else %}
+        O valor da locação será apurado conforme a periodicidade <strong>{{ periodicidade_label }}</strong> e as
+        condições comerciais acordadas entre as partes, formalizadas em fatura própria.
+        {% endif %}
+    </p>
+
+    <h2>Das obrigações da locatária</h2>
+    <p>
+        A LOCATÁRIA obriga-se a: (i) utilizar os equipamentos de acordo com sua finalidade e especificações
+        técnicas; (ii) zelar pela guarda, conservação e segurança dos equipamentos durante todo o período de
+        locação; (iii) não ceder, sublocar ou emprestar os equipamentos a terceiros sem autorização prévia e
+        expressa da LOCADORA; (iv) devolver os equipamentos ao término da locação nas mesmas condições em que
+        foram recebidos, ressalvado o desgaste natural decorrente do uso regular.
+    </p>
+
+    <h2>Das obrigações da locadora</h2>
+    <p>
+        A LOCADORA obriga-se a entregar os equipamentos em condições adequadas de uso e funcionamento, bem como a
+        prestar a manutenção preventiva e corretiva que seja de sua responsabilidade, salvo quando o dano decorrer
+        de uso inadequado por parte da LOCATÁRIA.
+    </p>
+
+    <h2>Da responsabilidade por danos e perdas</h2>
+    <p>
+        A LOCATÁRIA será responsável pelo ressarcimento de danos, avarias ou perda dos equipamentos ocorridos
+        durante o período de locação, quando decorrentes de uso inadequado, negligência, imprudência ou imperícia,
+        excluídos os casos de desgaste natural e defeitos de fabricação.
+    </p>
+
+    <h2>Da rescisão</h2>
+    <p>
+        O presente contrato poderá ser rescindido por qualquer das partes mediante notificação prévia por escrito,
+        ou de forma imediata em caso de descumprimento de qualquer de suas cláusulas, sem prejuízo da cobrança de
+        valores já devidos até a data da rescisão.
+    </p>
+
+{% endblock %}

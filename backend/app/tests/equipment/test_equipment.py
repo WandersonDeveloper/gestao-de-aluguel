@@ -18,13 +18,14 @@ def test_create_and_get_equipment(authed_client):
             "nome": "Escavadeira CAT 320",
             "categoria_id": category["id"],
             "identificador": "CHASSI-001",
-            "valor_diario": "500.00",
         },
     )
     assert response.status_code == 201
     body = response.json()
     assert body["status"] == "disponivel"
     assert body["categoria_id"] == category["id"]
+    assert body["quantidade_total"] == 0
+    assert body["estoques"] == []
 
     get_response = authed_client.get(f"/api/equipment/{body['id']}")
     assert get_response.status_code == 200

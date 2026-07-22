@@ -7,10 +7,12 @@ def _create_and_activate_contract(authed_client, documento, nome_categoria, valo
     cliente = authed_client.post(
         "/api/clients", json={"nome": "Cliente Pagamento", "tipo": "PF", "documento": documento}
     ).json()
+    filial = authed_client.post("/api/filiais", json={"nome": f"Filial {nome_categoria}"}).json()
     category = authed_client.post("/api/equipment-categories", json={"nome": nome_categoria}).json()
     equipamento = authed_client.post(
         "/api/equipment", json={"nome": "Equipamento Pagamento", "categoria_id": category["id"]}
     ).json()
+    authed_client.put(f"/api/equipment/{equipamento['id']}/estoque/{filial['id']}", json={"quantidade": 1})
     inicio = date.today()
     fim = inicio + timedelta(days=5)
     contract = authed_client.post(
@@ -19,7 +21,7 @@ def _create_and_activate_contract(authed_client, documento, nome_categoria, valo
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
             "valor_total": valor_total,
         },
     ).json()
@@ -84,6 +86,7 @@ def test_operador_cannot_register_payment(client, admin_user, operador_user):
         json={"nome": "Cliente RBAC Pag", "tipo": "PF", "documento": "222.222.222-06"},
         headers=admin_headers,
     ).json()
+    filial = client.post("/api/filiais", json={"nome": "Filial Pag RBAC"}, headers=admin_headers).json()
     category = client.post(
         "/api/equipment-categories", json={"nome": "Cat Pag RBAC"}, headers=admin_headers
     ).json()
@@ -92,6 +95,11 @@ def test_operador_cannot_register_payment(client, admin_user, operador_user):
         json={"nome": "Equip Pag RBAC", "categoria_id": category["id"]},
         headers=admin_headers,
     ).json()
+    client.put(
+        f"/api/equipment/{equipamento['id']}/estoque/{filial['id']}",
+        json={"quantidade": 1},
+        headers=admin_headers,
+    )
     inicio = date.today()
     fim = inicio + timedelta(days=5)
     contract = client.post(
@@ -100,7 +108,7 @@ def test_operador_cannot_register_payment(client, admin_user, operador_user):
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
             "valor_total": "100.00",
         },
         headers=admin_headers,

@@ -4,14 +4,14 @@ from app.models.contract import Contract, ContractStatus
 from app.services import contract_service
 
 
-def _create_and_activate(authed_client, cliente, equipamento, inicio, fim):
+def _create_and_activate(authed_client, cliente, equipamento, filial, inicio, fim):
     contract = authed_client.post(
         "/api/contracts",
         json={
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
         },
     ).json()
     authed_client.post(f"/api/contracts/{contract['id']}/activate")
@@ -19,11 +19,11 @@ def _create_and_activate(authed_client, cliente, equipamento, inicio, fim):
 
 
 def test_mark_expired_contracts_transitions_past_due_active_contract(
-    authed_client, db_session, cliente, equipamento
+    authed_client, db_session, cliente, equipamento, filial
 ):
     inicio = date.today() - timedelta(days=10)
     fim = date.today() - timedelta(days=5)
-    contract = _create_and_activate(authed_client, cliente, equipamento, inicio, fim)
+    contract = _create_and_activate(authed_client, cliente, equipamento, filial, inicio, fim)
 
     afetados = contract_service.mark_expired_contracts(db_session)
 
@@ -33,10 +33,10 @@ def test_mark_expired_contracts_transitions_past_due_active_contract(
 
 
 def test_mark_expired_contracts_does_not_touch_future_contract(
-    authed_client, db_session, cliente, equipamento, periodo_futuro
+    authed_client, db_session, cliente, equipamento, filial, periodo_futuro
 ):
     inicio, fim = periodo_futuro
-    contract = _create_and_activate(authed_client, cliente, equipamento, inicio, fim)
+    contract = _create_and_activate(authed_client, cliente, equipamento, filial, inicio, fim)
 
     afetados = contract_service.mark_expired_contracts(db_session)
 
@@ -45,7 +45,9 @@ def test_mark_expired_contracts_does_not_touch_future_contract(
     assert response.json()["status"] == "ativo"
 
 
-def test_mark_expired_contracts_does_not_touch_draft_contract(authed_client, db_session, cliente, equipamento):
+def test_mark_expired_contracts_does_not_touch_draft_contract(
+    authed_client, db_session, cliente, equipamento, filial
+):
     inicio = date.today() - timedelta(days=10)
     fim = date.today() - timedelta(days=5)
     contract = authed_client.post(
@@ -54,7 +56,7 @@ def test_mark_expired_contracts_does_not_touch_draft_contract(authed_client, db_
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
         },
     ).json()
 

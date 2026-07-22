@@ -8,23 +8,30 @@ def _create_client(authed_client, documento):
     ).json()
 
 
-def _create_equipment(authed_client, nome_categoria):
+def _create_filial(authed_client, nome):
+    return authed_client.post("/api/filiais", json={"nome": nome}).json()
+
+
+def _create_equipment(authed_client, nome_categoria, filial_id):
     category = authed_client.post("/api/equipment-categories", json={"nome": nome_categoria}).json()
-    return authed_client.post(
+    equipment = authed_client.post(
         "/api/equipment", json={"nome": "Equipamento Fatura", "categoria_id": category["id"]}
     ).json()
+    authed_client.put(f"/api/equipment/{equipment['id']}/estoque/{filial_id}", json={"quantidade": 1})
+    return equipment
 
 
 def _create_and_activate_contract(
     authed_client, documento, nome_categoria, data_inicio, data_fim, valor_total=None, periodicidade="unica"
 ):
     cliente = _create_client(authed_client, documento)
-    equipamento = _create_equipment(authed_client, nome_categoria)
+    filial = _create_filial(authed_client, f"Filial {nome_categoria}")
+    equipamento = _create_equipment(authed_client, nome_categoria, filial["id"])
     payload = {
         "cliente_id": cliente["id"],
         "data_inicio": data_inicio.isoformat(),
         "data_fim": data_fim.isoformat(),
-        "equipamento_ids": [equipamento["id"]],
+        "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
         "periodicidade_cobranca": periodicidade,
     }
     if valor_total is not None:

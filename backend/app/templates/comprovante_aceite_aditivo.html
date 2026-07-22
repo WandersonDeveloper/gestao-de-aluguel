@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+    @page {
+        size: A4;
+        margin: 2.5cm 2cm 2.5cm 2cm;
+    }
+    body {
+        font-family: "Helvetica", "Arial", sans-serif;
+        font-size: 11pt;
+        color: #1a1a1a;
+        line-height: 1.5;
+    }
+    h1 {
+        text-align: center;
+        font-size: 15pt;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    .subtitulo {
+        text-align: center;
+        font-size: 9pt;
+        color: #555555;
+        margin-bottom: 24px;
+    }
+    h2 {
+        font-size: 11.5pt;
+        text-transform: uppercase;
+        margin-top: 18px;
+        margin-bottom: 6px;
+        border-bottom: 0.5pt solid #999999;
+        padding-bottom: 2px;
+    }
+    p {
+        text-align: justify;
+        margin: 6px 0;
+    }
+    table.partes {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    table.partes td {
+        vertical-align: top;
+        padding: 2px 0;
+        font-size: 10.5pt;
+    }
+    .rotulo {
+        color: #555555;
+        font-size: 9pt;
+    }
+    .mensagem {
+        margin: 8px 0 16px 0;
+        padding: 10px 12px;
+        border: 0.5pt solid #999999;
+        border-radius: 3px;
+        background-color: #f7f7f7;
+        font-size: 10pt;
+        white-space: pre-wrap;
+    }
+    .timestamp {
+        font-size: 8.5pt;
+        color: #666666;
+        margin-top: -4px;
+        margin-bottom: 10px;
+    }
+    .declaracao {
+        margin-top: 20px;
+        padding: 10px 12px;
+        border: 0.5pt solid #333333;
+    }
+    .aviso-modelo {
+        margin-top: 30px;
+        padding: 8px 10px;
+        border: 0.5pt dashed #999999;
+        font-size: 8pt;
+        color: #666666;
+    }
+    .local-data {
+        margin-top: 30px;
+        font-size: 10.5pt;
+    }
+</style>
+</head>
+<body>
+    <h1>Comprovante de Aceite Eletrônico — Aditivo</h1>
+    <p class="subtitulo">
+        Referente ao aditivo do Contrato nº {{ contrato.id }} — itens adicionados no período de
+        {{ periodo }} — gerado em {{ gerado_em }}
+    </p>
+
+    <h2>Das partes</h2>
+    <table class="partes">
+        <tr>
+            <td style="width: 50%">
+                <span class="rotulo">Contratada:</span><br />
+                <strong>{{ empresa.nome }}</strong><br />
+                CNPJ: {{ empresa.documento }}<br />
+                {{ empresa.endereco }}
+            </td>
+            <td style="width: 50%">
+                <span class="rotulo">Contratante:</span><br />
+                <strong>{{ cliente.nome }}</strong><br />
+                {{ "CNPJ" if cliente.tipo == "PJ" else "CPF" }}: {{ cliente.documento }}<br />
+                Telefone: {{ telefone }}
+            </td>
+        </tr>
+    </table>
+
+    <h2>Itens adicionados</h2>
+    <p>{{ itens_descricao }}</p>
+
+    <h2>Mensagem enviada ao contratante</h2>
+    <p class="timestamp">Enviada em {{ enviada_em }} via WhatsApp</p>
+    <div class="mensagem">{{ mensagem_enviada }}</div>
+
+    <h2>Resposta recebida do contratante</h2>
+    <p class="timestamp">Recebida em {{ confirmada_em }} via WhatsApp, do número {{ telefone }}</p>
+    <div class="mensagem">{{ resposta_texto }}</div>
+
+    <div class="declaracao">
+        <p>
+            Este documento certifica que, na data e hora acima indicadas, através do número de telefone
+            {{ telefone }}, associado ao contratante {{ cliente.nome }}, foi registrada resposta afirmativa ao
+            aditivo do Contrato nº {{ contrato.id }} (item(ns) adicionado(s) descritos acima), encaminhado por
+            meio da plataforma de mensagens WhatsApp.
+        </p>
+        <p>
+            A manifestação de vontade aqui registrada observa o princípio da liberdade de forma previsto no
+            art. 107 do Código Civil Brasileiro (Lei nº 10.406/2002), segundo o qual a validade da declaração de
+            vontade não dependerá de forma especial, salvo quando a lei expressamente a exigir.
+        </p>
+    </div>
+
+    <p class="local-data">{{ gerado_em }}.</p>
+
+    <div class="aviso-modelo">
+        Este documento foi gerado automaticamente com base no registro da troca de mensagens via WhatsApp e não
+        constitui, por si só, uma assinatura eletrônica certificada (ICP-Brasil) nem substitui aconselhamento
+        jurídico. Recomenda-se revisão por um advogado quanto à adequação desta forma de aceite para o caso
+        concreto, especialmente em contratos de maior valor ou risco.
+    </div>
+</body>
+</html>

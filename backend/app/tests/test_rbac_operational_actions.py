@@ -14,6 +14,7 @@ def _setup_cliente_e_equipamento(client, admin_user, sufixo: str):
         json={"nome": f"Cliente RBAC {sufixo}", "tipo": "PF", "documento": f"{sufixo}-000.000-00"},
         headers=admin_headers,
     ).json()
+    filial = client.post("/api/filiais", json={"nome": f"Filial RBAC {sufixo}"}, headers=admin_headers).json()
     category = client.post(
         "/api/equipment-categories", json={"nome": f"Cat RBAC {sufixo}"}, headers=admin_headers
     ).json()
@@ -22,11 +23,16 @@ def _setup_cliente_e_equipamento(client, admin_user, sufixo: str):
         json={"nome": f"Equip RBAC {sufixo}", "categoria_id": category["id"]},
         headers=admin_headers,
     ).json()
-    return cliente, equipamento
+    client.put(
+        f"/api/equipment/{equipamento['id']}/estoque/{filial['id']}",
+        json={"quantidade": 1},
+        headers=admin_headers,
+    )
+    return cliente, equipamento, filial
 
 
 def test_financeiro_cannot_create_contract(client, admin_user, financeiro_user):
-    cliente, equipamento = _setup_cliente_e_equipamento(client, admin_user, "1")
+    cliente, equipamento, filial = _setup_cliente_e_equipamento(client, admin_user, "1")
     inicio = date.today()
     fim = inicio + timedelta(days=5)
 
@@ -36,7 +42,7 @@ def test_financeiro_cannot_create_contract(client, admin_user, financeiro_user):
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
         },
         headers=_headers(financeiro_user),
     )
@@ -44,7 +50,7 @@ def test_financeiro_cannot_create_contract(client, admin_user, financeiro_user):
 
 
 def test_operador_can_create_contract(client, admin_user, operador_user):
-    cliente, equipamento = _setup_cliente_e_equipamento(client, admin_user, "2")
+    cliente, equipamento, filial = _setup_cliente_e_equipamento(client, admin_user, "2")
     inicio = date.today()
     fim = inicio + timedelta(days=5)
 
@@ -54,7 +60,7 @@ def test_operador_can_create_contract(client, admin_user, operador_user):
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
         },
         headers=_headers(operador_user),
     )
@@ -62,7 +68,7 @@ def test_operador_can_create_contract(client, admin_user, operador_user):
 
 
 def test_financeiro_cannot_change_equipment_status(client, admin_user, financeiro_user):
-    _, equipamento = _setup_cliente_e_equipamento(client, admin_user, "3")
+    _, equipamento, _ = _setup_cliente_e_equipamento(client, admin_user, "3")
 
     response = client.post(
         f"/api/equipment/{equipamento['id']}/status",
@@ -73,7 +79,7 @@ def test_financeiro_cannot_change_equipment_status(client, admin_user, financeir
 
 
 def test_financeiro_cannot_create_service_order(client, admin_user, financeiro_user):
-    _, equipamento = _setup_cliente_e_equipamento(client, admin_user, "4")
+    _, equipamento, _ = _setup_cliente_e_equipamento(client, admin_user, "4")
 
     response = client.post(
         "/api/service-orders",

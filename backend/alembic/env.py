@@ -65,8 +65,15 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        # transaction_per_migration=True: cada revisão comita em sua própria
+        # transação, não uma só pra todo o `upgrade head`. Necessário porque o
+        # PostgreSQL exige que um valor novo de ENUM (ALTER TYPE ... ADD
+        # VALUE) esteja commitado antes de ser usado em DML — sem isso,
+        # aplicar de uma vez uma migration que adiciona o valor seguida de
+        # outra que o usa falha com "unsafe use of new value ... must be
+        # committed before they can be used" (visto ao vivo neste projeto).
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection, target_metadata=target_metadata, transaction_per_migration=True
         )
 
         with context.begin_transaction():

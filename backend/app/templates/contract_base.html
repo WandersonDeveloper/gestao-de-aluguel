@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+    @page {
+        size: A4;
+        margin: 2.5cm 2cm 2.5cm 2cm;
+    }
+    body {
+        font-family: "Helvetica", "Arial", sans-serif;
+        font-size: 11pt;
+        color: #1a1a1a;
+        line-height: 1.5;
+    }
+    h1 {
+        text-align: center;
+        font-size: 15pt;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    .subtitulo {
+        text-align: center;
+        font-size: 9pt;
+        color: #555555;
+        margin-bottom: 24px;
+    }
+    h2 {
+        font-size: 11.5pt;
+        text-transform: uppercase;
+        margin-top: 18px;
+        margin-bottom: 6px;
+        border-bottom: 0.5pt solid #999999;
+        padding-bottom: 2px;
+    }
+    p {
+        text-align: justify;
+        margin: 6px 0;
+    }
+    table.itens {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0 12px 0;
+    }
+    table.itens th, table.itens td {
+        border: 0.5pt solid #999999;
+        padding: 5px 6px;
+        font-size: 9.5pt;
+        text-align: left;
+    }
+    table.itens th {
+        background-color: #eeeeee;
+    }
+    table.partes {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    table.partes td {
+        vertical-align: top;
+        padding: 2px 0;
+        font-size: 10.5pt;
+    }
+    .rotulo {
+        color: #555555;
+        font-size: 9pt;
+    }
+    .assinaturas {
+        margin-top: 48px;
+    }
+    .linha-assinatura {
+        margin-top: 40px;
+        border-top: 0.5pt solid #333333;
+        width: 70%;
+        padding-top: 4px;
+        font-size: 10pt;
+    }
+    .aviso-modelo {
+        margin-top: 30px;
+        padding: 8px 10px;
+        border: 0.5pt dashed #999999;
+        font-size: 8pt;
+        color: #666666;
+    }
+    .local-data {
+        margin-top: 30px;
+        font-size: 10.5pt;
+    }
+</style>
+</head>
+<body>
+    <h1>{{ titulo }}</h1>
+    <p class="subtitulo">Documento nº {{ contrato.id }} — gerado em {{ gerado_em }}</p>
+
+    <h2>Das partes</h2>
+    <table class="partes">
+        <tr>
+            <td style="width: 50%">
+                <span class="rotulo">{{ empresa_papel }}:</span><br />
+                <strong>{{ empresa.nome }}</strong><br />
+                CNPJ: {{ empresa.documento }}<br />
+                {{ empresa.endereco }}
+            </td>
+            <td style="width: 50%">
+                <span class="rotulo">{{ cliente_papel }}:</span><br />
+                <strong>{{ cliente.nome }}</strong><br />
+                {{ "CNPJ" if cliente.tipo == "PJ" else "CPF" }}: {{ cliente.documento }}<br />
+                {{ cliente.endereco or "Endereço não informado" }}
+            </td>
+        </tr>
+    </table>
+
+    {% block conteudo %}{% endblock %}
+
+    <h2>Da mora e multa por atraso</h2>
+    <p>
+        O não pagamento de qualquer fatura na data de vencimento sujeitará a {{ cliente_papel }} à multa de
+        <strong>{{ multa_atraso_percentual }}</strong> sobre o valor em atraso, aplicada uma única vez a partir do
+        vencimento, sem prejuízo de eventuais encargos moratórios adicionais previstos em lei.
+    </p>
+
+    <h2>Do foro</h2>
+    <p>
+        Fica eleito o foro da comarca da sede da {{ empresa_papel }} para dirimir quaisquer dúvidas ou litígios
+        oriundos deste instrumento, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
+    </p>
+
+    <p class="local-data">{{ gerado_em }}.</p>
+
+    <div class="assinaturas">
+        <div class="linha-assinatura">{{ empresa.nome }} — {{ empresa_papel }}</div>
+        <div class="linha-assinatura">{{ cliente.nome }} — {{ cliente_papel }}</div>
+    </div>
+
+    <div class="aviso-modelo">
+        Este documento foi gerado automaticamente a partir de um modelo genérico de contrato e não constitui
+        aconselhamento jurídico. Recomenda-se revisão por um advogado antes de qualquer uso formal.
+    </div>
+</body>
+</html>

@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.equipment import Equipment, EquipmentStatus
+from app.models.equipment_stock import EquipmentStock
 
 
 def create(db: Session, data: dict) -> Equipment:
@@ -27,6 +28,7 @@ def list_all(
     categoria_id: int | None = None,
     status: EquipmentStatus | None = None,
     nome: str | None = None,
+    filial_id: int | None = None,
 ) -> list[Equipment]:
     stmt = select(Equipment)
     if categoria_id is not None:
@@ -35,7 +37,11 @@ def list_all(
         stmt = stmt.where(Equipment.status == status)
     if nome:
         stmt = stmt.where(Equipment.nome.ilike(f"%{nome}%"))
-    stmt = stmt.offset(skip).limit(limit)
+    if filial_id is not None:
+        stmt = stmt.where(
+            Equipment.id.in_(select(EquipmentStock.equipamento_id).where(EquipmentStock.filial_id == filial_id))
+        )
+    stmt = stmt.distinct().offset(skip).limit(limit)
     return list(db.scalars(stmt))
 
 

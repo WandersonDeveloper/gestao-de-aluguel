@@ -7,10 +7,12 @@ def _create_and_activate_contract(authed_client, documento, nome_categoria, valo
     cliente = authed_client.post(
         "/api/clients", json={"nome": "Cliente Relatorio", "tipo": "PF", "documento": documento}
     ).json()
+    filial = authed_client.post("/api/filiais", json={"nome": f"Filial {nome_categoria}"}).json()
     category = authed_client.post("/api/equipment-categories", json={"nome": nome_categoria}).json()
     equipamento = authed_client.post(
         "/api/equipment", json={"nome": "Equipamento Relatorio", "categoria_id": category["id"]}
     ).json()
+    authed_client.put(f"/api/equipment/{equipamento['id']}/estoque/{filial['id']}", json={"quantidade": 1})
     inicio = date.today() - timedelta(days=dias_passado + 5)
     fim = date.today() - timedelta(days=dias_passado)
     contract = authed_client.post(
@@ -19,7 +21,7 @@ def _create_and_activate_contract(authed_client, documento, nome_categoria, valo
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
             "valor_total": valor_total,
         },
     ).json()

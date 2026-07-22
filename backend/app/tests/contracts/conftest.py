@@ -10,11 +10,17 @@ def _create_client(authed_client, documento):
     ).json()
 
 
-def _create_equipment(authed_client, nome_categoria):
+def _create_filial(authed_client, nome):
+    return authed_client.post("/api/filiais", json={"nome": nome}).json()
+
+
+def _create_equipment_with_stock(authed_client, nome_categoria, filial_id, quantidade=1):
     category = authed_client.post("/api/equipment-categories", json={"nome": nome_categoria}).json()
-    return authed_client.post(
+    equipment = authed_client.post(
         "/api/equipment", json={"nome": "Equipamento Contrato", "categoria_id": category["id"]}
     ).json()
+    authed_client.put(f"/api/equipment/{equipment['id']}/estoque/{filial_id}", json={"quantidade": quantidade})
+    return equipment
 
 
 @pytest.fixture()
@@ -23,8 +29,13 @@ def cliente(authed_client):
 
 
 @pytest.fixture()
-def equipamento(authed_client):
-    return _create_equipment(authed_client, "Categoria Contrato")
+def filial(authed_client):
+    return _create_filial(authed_client, "Filial Contrato")
+
+
+@pytest.fixture()
+def equipamento(authed_client, filial):
+    return _create_equipment_with_stock(authed_client, "Categoria Contrato", filial["id"])
 
 
 @pytest.fixture()

@@ -16,3 +16,6 @@ frontend/.env
 .idea/
 .DS_Store
 Thumbs.db
+
+# Claude Code local state (worktrees, session scratch)
+.claude/

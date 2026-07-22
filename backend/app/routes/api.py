@@ -5,12 +5,15 @@ from app.routes.client_routes import router as client_router
 from app.routes.contract_routes import router as contract_router
 from app.routes.equipment_category_routes import router as equipment_category_router
 from app.routes.equipment_routes import router as equipment_router
+from app.routes.filial_routes import router as filial_router
 from app.routes.health_routes import router as health_router
 from app.routes.invoice_routes import router as invoice_router
 from app.routes.report_routes import router as report_router
 from app.routes.service_order_routes import router as service_order_router
+from app.routes.settings_routes import router as settings_router
 from app.routes.supplier_routes import router as supplier_router
 from app.routes.user_routes import router as user_router
+from app.routes.webhook_routes import router as webhook_router
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(health_router)
@@ -24,3 +27,6 @@ api_router.include_router(service_order_router)
 api_router.include_router(supplier_router)
 api_router.include_router(invoice_router)
 api_router.include_router(report_router)
+api_router.include_router(filial_router)
+api_router.include_router(settings_router)
+api_router.include_router(webhook_router)

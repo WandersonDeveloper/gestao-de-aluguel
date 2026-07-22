@@ -8,10 +8,12 @@ def _create_and_activate_overdue_contract(authed_client, documento, nome_categor
     cliente = authed_client.post(
         "/api/clients", json={"nome": "Cliente Atraso", "tipo": "PF", "documento": documento}
     ).json()
+    filial = authed_client.post("/api/filiais", json={"nome": f"Filial {nome_categoria}"}).json()
     category = authed_client.post("/api/equipment-categories", json={"nome": nome_categoria}).json()
     equipamento = authed_client.post(
         "/api/equipment", json={"nome": "Equipamento Atraso", "categoria_id": category["id"]}
     ).json()
+    authed_client.put(f"/api/equipment/{equipamento['id']}/estoque/{filial['id']}", json={"quantidade": 1})
     inicio = date.today() - timedelta(days=10)
     fim = date.today() - timedelta(days=5)
     contract = authed_client.post(
@@ -20,7 +22,7 @@ def _create_and_activate_overdue_contract(authed_client, documento, nome_categor
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
             "valor_total": valor_total,
         },
     ).json()
@@ -45,10 +47,12 @@ def test_mark_overdue_invoices_does_not_touch_future_invoice(authed_client, db_s
     cliente = authed_client.post(
         "/api/clients", json={"nome": "Cliente Futuro", "tipo": "PF", "documento": "333.333.333-02"}
     ).json()
+    filial = authed_client.post("/api/filiais", json={"nome": "Filial Cat Atraso B"}).json()
     category = authed_client.post("/api/equipment-categories", json={"nome": "Cat Atraso B"}).json()
     equipamento = authed_client.post(
         "/api/equipment", json={"nome": "Equipamento Futuro", "categoria_id": category["id"]}
     ).json()
+    authed_client.put(f"/api/equipment/{equipamento['id']}/estoque/{filial['id']}", json={"quantidade": 1})
     inicio = date.today() + timedelta(days=5)
     fim = inicio + timedelta(days=5)
     contract = authed_client.post(
@@ -57,7 +61,7 @@ def test_mark_overdue_invoices_does_not_touch_future_invoice(authed_client, db_s
             "cliente_id": cliente["id"],
             "data_inicio": inicio.isoformat(),
             "data_fim": fim.isoformat(),
-            "equipamento_ids": [equipamento["id"]],
+            "itens": [{"equipamento_id": equipamento["id"], "filial_id": filial["id"], "quantidade": 1}],
             "valor_total": "100.00",
         },
     ).json()

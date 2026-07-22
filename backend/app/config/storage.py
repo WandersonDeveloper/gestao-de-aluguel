@@ -64,6 +64,11 @@ def delete_file(key: str) -> None:
     get_s3_client().delete_object(Bucket=settings.s3_bucket_name, Key=key)
 
 
+def download_file(key: str) -> bytes:
+    response = get_s3_client().get_object(Bucket=settings.s3_bucket_name, Key=key)
+    return response["Body"].read()
+
+
 def get_file_url(key: str, expires_in: int = 3600) -> str:
     return _get_public_s3_client().generate_presigned_url(
         "get_object",

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,13 +15,14 @@ def create(db: Session, data: dict) -> InventoryMovement:
 
 
 def list_by_equipamento(
-    db: Session, equipamento_id: int, skip: int = 0, limit: int = 50
+    db: Session,
+    equipamento_id: int,
+    skip: int = 0,
+    limit: int = 50,
+    desde: datetime | None = None,
 ) -> list[InventoryMovement]:
-    stmt = (
-        select(InventoryMovement)
-        .where(InventoryMovement.equipamento_id == equipamento_id)
-        .order_by(InventoryMovement.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-    )
+    stmt = select(InventoryMovement).where(InventoryMovement.equipamento_id == equipamento_id)
+    if desde is not None:
+        stmt = stmt.where(InventoryMovement.created_at >= desde)
+    stmt = stmt.order_by(InventoryMovement.created_at.desc()).offset(skip).limit(limit)
     return list(db.scalars(stmt))

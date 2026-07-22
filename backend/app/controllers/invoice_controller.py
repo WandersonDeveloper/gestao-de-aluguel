@@ -12,9 +12,16 @@ def get_invoice(db: Session, invoice_id: int) -> Invoice:
 
 
 def list_invoices(
-    db: Session, skip: int, limit: int, contrato_id: int | None, status: InvoiceStatus | None
+    db: Session,
+    skip: int,
+    limit: int,
+    contrato_id: int | None,
+    status: InvoiceStatus | None,
+    cliente_id: int | None = None,
 ) -> list[Invoice]:
-    return invoice_service.list_invoices(db, skip=skip, limit=limit, contrato_id=contrato_id, status=status)
+    return invoice_service.list_invoices(
+        db, skip=skip, limit=limit, contrato_id=contrato_id, status=status, cliente_id=cliente_id
+    )
 
 
 def list_invoice_items(db: Session, invoice_id: int) -> list[InvoiceItem]:
@@ -23,6 +30,10 @@ def list_invoice_items(db: Session, invoice_id: int) -> list[InvoiceItem]:
 
 def cancel_invoice(db: Session, invoice_id: int) -> Invoice:
     return invoice_service.cancel_invoice(db, invoice_id)
+
+
+def send_whatsapp(db: Session, invoice_id: int) -> None:
+    invoice_service.send_invoice_whatsapp(db, invoice_id)
 
 
 def register_payment(db: Session, invoice_id: int, data: PaymentCreate, usuario_id: int) -> Payment:

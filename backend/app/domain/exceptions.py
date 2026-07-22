@@ -16,3 +16,7 @@ class UnauthorizedError(Exception):
 
 class ForbiddenError(Exception):
     pass
+
+
+class ExternalServiceError(Exception):
+    pass

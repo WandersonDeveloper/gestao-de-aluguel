@@ -18,9 +18,10 @@ def list_invoices(
     limit: int = 50,
     contrato_id: int | None = None,
     status: InvoiceStatus | None = None,
+    cliente_id: int | None = None,
     db: Session = Depends(get_db),
 ) -> list[InvoiceRead]:
-    return invoice_controller.list_invoices(db, skip, limit, contrato_id, status)
+    return invoice_controller.list_invoices(db, skip, limit, contrato_id, status, cliente_id)
 
 
 @router.get("/{invoice_id}", response_model=InvoiceRead)
@@ -40,6 +41,15 @@ def cancel_invoice(
     _: User = Depends(require_roles(UserRole.ADMIN, UserRole.FINANCEIRO)),
 ) -> InvoiceRead:
     return invoice_controller.cancel_invoice(db, invoice_id)
+
+
+@router.post("/{invoice_id}/send-whatsapp", status_code=status.HTTP_204_NO_CONTENT)
+def send_invoice_whatsapp(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.ADMIN, UserRole.FINANCEIRO)),
+) -> None:
+    invoice_controller.send_whatsapp(db, invoice_id)
 
 
 @router.post("/{invoice_id}/payments", response_model=PaymentRead, status_code=status.HTTP_201_CREATED)

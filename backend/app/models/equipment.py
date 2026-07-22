@@ -1,14 +1,14 @@
 import enum
 from datetime import datetime
-from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String, func
+from sqlalchemy import ForeignKey, String, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.config.database import Base
 from app.models.equipment_category import EquipmentCategory
+from app.models.equipment_stock import EquipmentStock
 
 
 class EquipmentStatus(str, enum.Enum):
@@ -33,8 +33,6 @@ class Equipment(Base):
         server_default=EquipmentStatus.DISPONIVEL.name,
         nullable=False,
     )
-    valor_diario: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
-    valor_mensal: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     localizacao: Mapped[str | None] = mapped_column(String(255))
     observacoes: Mapped[str | None] = mapped_column(String(2000))
     atributos_extra: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
@@ -42,3 +40,17 @@ class Equipment(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     categoria: Mapped[EquipmentCategory] = relationship()
+    # Quantidade e valores de locação por filial (ver EquipmentStock): um mesmo
+    # equipamento pode estar disponível em várias filiais simultaneamente, cada
+    # uma com sua própria quantidade e preço. `status` acima só é significativo
+    # para equipamento "serializado" (uma única filial, quantidade 1) — ver
+    # `is_estoque` e `regras-de-negocio.md`.
+    estoques: Mapped[list[EquipmentStock]] = relationship(cascade="all, delete-orphan")
+
+    @property
+    def quantidade_total(self) -> int:
+        return sum(estoque.quantidade for estoque in self.estoques)
+
+    @property
+    def is_estoque(self) -> bool:
+        return self.quantidade_total > 1 or len(self.estoques) > 1

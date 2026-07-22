@@ -1,0 +1,73 @@
+{% extends "contract_base.html" %}
+{% block conteudo %}
+
+    <h2>Do objeto</h2>
+    <p>
+        O presente contrato tem por objeto a prestação, pel{{ "a" }} PRESTADORA à CONTRATANTE, de serviços
+        realizados com o uso dos equipamentos e/ou mão de obra discriminados na tabela abaixo, incluindo a
+        operação técnica necessária à execução dos serviços contratados.
+    </p>
+    <table class="itens">
+        <tr>
+            <th>Equipamento/serviço</th>
+            <th>Filial de origem</th>
+            <th>Quantidade</th>
+            <th>Valor de referência</th>
+        </tr>
+        {% for item in itens %}
+        <tr>
+            <td>{{ item.equipamento_nome }}{% if item.identificador %} ({{ item.identificador }}){% endif %}</td>
+            <td>{{ item.filial_nome }}</td>
+            <td>{{ item.quantidade }}</td>
+            <td>{{ item.valor_referencia }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Do prazo</h2>
+    <p>
+        Os serviços serão executados no período de <strong>{{ contrato.data_inicio }}</strong> a
+        <strong>{{ contrato.data_fim }}</strong>, podendo ser prorrogado mediante aditivo formalizado entre as
+        partes.
+    </p>
+
+    <h2>Do valor e forma de pagamento</h2>
+    <p>
+        {% if contrato.valor_total %}
+        O valor total dos serviços é de <strong>{{ contrato.valor_total }}</strong>, com cobrança na periodicidade
+        <strong>{{ periodicidade_label }}</strong>, conforme faturas emitidas pela PRESTADORA.
+        {% else %}
+        O valor dos serviços será apurado conforme a periodicidade <strong>{{ periodicidade_label }}</strong> e as
+        condições comerciais acordadas entre as partes, formalizadas em fatura própria.
+        {% endif %}
+    </p>
+
+    <h2>Das obrigações da contratante</h2>
+    <p>
+        A CONTRATANTE obriga-se a: (i) fornecer as condições necessárias de acesso e segurança para a execução
+        dos serviços no local combinado; (ii) informar previamente quaisquer condições especiais do local ou da
+        atividade que possam impactar a execução; (iii) efetuar o pagamento nas condições e prazos acordados.
+    </p>
+
+    <h2>Das obrigações da prestadora</h2>
+    <p>
+        A PRESTADORA obriga-se a executar os serviços contratados com equipamentos em condições adequadas de uso
+        e por meio de operadores tecnicamente capacitados, observando as normas técnicas e de segurança
+        aplicáveis à atividade.
+    </p>
+
+    <h2>Da responsabilidade por danos</h2>
+    <p>
+        A PRESTADORA responde pelos danos que seus equipamentos ou operadores causarem diretamente durante a
+        execução dos serviços, por ação ou omissão de sua responsabilidade, ressalvados os danos decorrentes de
+        informações incorretas ou condições inadequadas do local fornecidas pela CONTRATANTE.
+    </p>
+
+    <h2>Da rescisão</h2>
+    <p>
+        O presente contrato poderá ser rescindido por qualquer das partes mediante notificação prévia por
+        escrito, ou de forma imediata em caso de descumprimento de qualquer de suas cláusulas, sem prejuízo da
+        cobrança de valores já devidos até a data da rescisão.
+    </p>
+
+{% endblock %}
